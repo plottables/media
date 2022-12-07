@@ -7,11 +7,5 @@ export default async function handler(
   res: NextApiResponse<String>
 ) {
   const { contractAddress, tokenId, uri } = req.query;
-  if (
-    typeof contractAddress === "string" &&
-    typeof tokenId === "string" &&
-    typeof uri === "string"
-  ) {
-    res.send(await parseHtml("plot", contractAddress, tokenId, uri));
-  }
+  res.send(await parseHtml("plot", contractAddress, tokenId, uri));
 }

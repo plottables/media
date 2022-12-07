@@ -2,28 +2,35 @@ import { parse } from "node-html-parser";
 
 export default async function parseHtml(
   type: string,
-  contractAddress: string,
-  tokenId: string,
-  uri: string
+  contractAddress: string | string[] | undefined,
+  tokenId: string | string[] | undefined,
+  uri: string | string[] | undefined
 ): Promise<string> {
-  const htmlResponse = await fetch(
-    `${decodeURI(uri)}/${contractAddress.toString().toLowerCase()}/${tokenId}`
-  );
-  let html = await htmlResponse.text();
+  let root = parse("<html></html>");
+  if (
+    typeof contractAddress === "string" &&
+    typeof tokenId === "string" &&
+    typeof uri === "string"
+  ) {
+    const htmlResponse = await fetch(
+      `${decodeURI(uri)}/${contractAddress.toString().toLowerCase()}/${tokenId}`
+    );
+    let html = await htmlResponse.text();
 
-  let root = parse(html);
+    root = parse(html);
 
-  let tokenData = root
-    .getElementsByTagName("script")
-    .filter((n) => n.text.startsWith("let tokenData ="))
-    .pop()
-    ?.childNodes.pop();
-  tokenData?.parentNode.set_content(
-    tokenData.rawText.replace(
-      "let tokenData = {",
-      'let tokenData ={"plot":true,'
-    )
-  );
+    let tokenData = root
+      .getElementsByTagName("script")
+      .filter((n) => n.text.startsWith("let tokenData ="))
+      .pop()
+      ?.childNodes.pop();
+    tokenData?.parentNode.set_content(
+      tokenData.rawText.replace(
+        "let tokenData = {",
+        'let tokenData ={"plot":true,'
+      )
+    );
+  }
 
   let body = root.querySelector("body");
   if (!body) body = root.appendChild(parse(`<body></body>`));
