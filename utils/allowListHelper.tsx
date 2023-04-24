@@ -7,7 +7,7 @@ export const hashAddress = (address: string) => {
 };
 
 export const generateMerkleTree = (contractAddress: string, projectId: string) => {
-    const file = readFileSync(`public/allowLists/${contractAddress?.toString().toLowerCase()}-${projectId}.csv`, 'utf-8');
+    const file = readFileSync(`allowLists/${contractAddress?.toString().toLowerCase()}-${projectId}.csv`, 'utf-8');
     const addresses = file
         .split(",")
         .filter((address) => address !== "")
