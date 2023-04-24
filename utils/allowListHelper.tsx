@@ -1,13 +1,15 @@
 import { MerkleTree } from "merkletreejs";
 import { keccak256, solidityPackedKeccak256 } from "ethers";
 import { readFileSync } from "fs";
+import path from 'path';
 
 export const hashAddress = (address: string) => {
     return Buffer.from(solidityPackedKeccak256(["address"], [address]).slice(2), "hex");
 };
 
 export const generateMerkleTree = (contractAddress: string, projectId: string) => {
-    const file = readFileSync(`allowLists/${contractAddress?.toString().toLowerCase()}-${projectId}.csv`, 'utf-8');
+    const directory = path.join(process.cwd(), 'public/allowLists');
+    const file = readFileSync(`${directory}/${contractAddress?.toString().toLowerCase()}-${projectId}.csv`, 'utf-8');
     const addresses = file
         .split(",")
         .filter((address) => address !== "")
