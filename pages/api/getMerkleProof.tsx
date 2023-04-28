@@ -8,6 +8,6 @@ export default async function handler(
 ) {
     const { contractAddress, projectId, walletAddress } = req.query;
     const merkleTree = generateMerkleTree(contractAddress as string, projectId as string);
-    res.setHeader("Access-Control-Allow-Origin", "https://artblocks-engine-react-rho.vercel.app");
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.send(merkleTree.getHexProof(hashAddress(walletAddress as string)));
 }
