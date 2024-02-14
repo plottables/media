@@ -4,46 +4,33 @@ import NextCors from 'nextjs-cors';
 import path from "path";
 import { readFileSync } from "fs";
 import { Alchemy, Network } from "alchemy-sdk";
+import {getNetworkConfig} from "../../utils/getNetworkConfig";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Object>
-) {
-  const { contractAddress, projectId, walletAddress, isMainnet } = req.query;
-  await NextCors(req, res, {
-    methods: ['GET'],
-    origin: '*',
-    optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-  });
-
-  const directory = path.join(process.cwd(), 'config/holderLists');
-  const file = readFileSync(`${directory}/${contractAddress?.toString().toLowerCase()}-${projectId}.csv`, 'utf-8');
-  const projects = file
-    .split(",")
-    .filter((address) => address !== "")
-    .map((a) => a.toLowerCase().trim());
-
-  const config = {
-    apiKey: isMainnet === "1" ? process.env.ALCHEMY_API_KEY_MAINNET : process.env.ALCHEMY_API_KEY_TESTNET,
-    network: isMainnet === "1" ? Network.ETH_MAINNET : Network.ETH_GOERLI,
-  };
-  const alchemy = new Alchemy(config);
-  await alchemy.nft.getNftsForOwner(
-    walletAddress as string,
-    { contractAddresses: projects.map((project) => project.split("-")[0]) }
-  )
-    .then((data) => {
-      res.send(data.ownedNfts
-        .filter((ownedNft) => {
-          return projects.includes(`${ownedNft.contract.address}-${Math.floor(Number(ownedNft.tokenId) / 1000000)}`)
-        })
-        .map((ownedNft) => {
-          return {
-            contractAddress: ownedNft.contract.address,
-            tokenId: ownedNft.tokenId
-          }
-        })[0]
-      )
-    });
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Object>) {
+  const { contractAddress, projectId, walletAddress, network } = req.query
+  await NextCors(req, res, { methods: ['GET'], origin: '*', optionsSuccessStatus: 200 })
+  const directory = path.join(process.cwd(), 'config/holderLists')
+  const filename = `${contractAddress?.toString().toLowerCase()}-${projectId}.csv\``
+  const file = readFileSync(`${directory}/${filename}`, 'utf-8')
+  const projects = file.split(",").filter((address) => address !== "")
+    .map((a) => a.toLowerCase().trim())
+  const networkConfig = getNetworkConfig(network as string)
+  if (networkConfig) {
+    const alchemy = new Alchemy(networkConfig);
+    const options = {contractAddresses: projects.map((project) => project.split("-")[0])}
+    await alchemy.nft.getNftsForOwner(walletAddress as string, options)
+      .then((data) => {
+        const response = data.ownedNfts
+          .filter((nft) => {
+            return projects.includes(`${nft.contract.address}-${Math.floor(Number(nft.tokenId) / 1000000)}`)
+          })
+          .map((nft) => {
+            return {contractAddress: nft.contract.address, tokenId: nft.tokenId}
+          })[0]
+        res.send(response)
+      });
+  } else {
+    res.send(false)
+  }
 
 }
