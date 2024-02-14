@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const { contractAddress, projectId, walletAddress, chainId } = req.query
   await NextCors(req, res, { methods: ['GET'], origin: '*', optionsSuccessStatus: 200 })
   const directory = path.join(process.cwd(), 'config/holderLists')
-  const filename = `${contractAddress?.toString().toLowerCase()}-${projectId}.csv\``
+  const filename = `${contractAddress?.toString().toLowerCase()}-${projectId}.csv`
   const file = readFileSync(`${directory}/${filename}`, 'utf-8')
   const projects = file.split(",").filter((address) => address !== "")
     .map((a) => a.toLowerCase().trim())
