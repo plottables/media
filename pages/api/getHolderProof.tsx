@@ -21,15 +21,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       .map((project) => project.split("-")[0])
       .filter((value, index, array) => array.indexOf(value) === index)
     const contractAddressesLimit = 20;
+    let response: { tokenId: string; contractAddress: string } | boolean = false
     for (let i = 0; i < uniqueContractAddresses.length; i += contractAddressesLimit) {
       const contractAddresses = uniqueContractAddresses.slice(i, i + contractAddressesLimit)
       for await (const nft of alchemy.nft.getNftsForOwnerIterator(walletAddress as string, { contractAddresses })) {
         if (projects.includes(`${nft.contract.address}-${Math.floor(Number(nft.tokenId) / 1000000)}`)) {
-          res.send({contractAddress: nft.contract.address, tokenId: nft.tokenId})
+          response = {contractAddress: nft.contract.address, tokenId: nft.tokenId}
+          break
         }
       }
+      if (response) break
     }
-    res.send(false)
+    res.send(response)
   } else {
     res.send(false)
   }
